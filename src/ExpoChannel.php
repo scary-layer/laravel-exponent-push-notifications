@@ -3,11 +3,13 @@
 namespace NotificationChannels\ExpoPushNotifications;
 
 use ExponentPhpSDK\Exceptions\ExpoException;
+use ExponentPhpSDK\Exceptions\TooManyExperienceIds;
 use ExponentPhpSDK\Expo;
 use Illuminate\Contracts\Events\Dispatcher;
 use Illuminate\Notifications\Events\NotificationFailed;
 use Illuminate\Notifications\Notification;
 use NotificationChannels\ExpoPushNotifications\Exceptions\CouldNotSendNotification;
+use NotificationChannels\ExpoPushNotifications\Models\Interest;
 
 class ExpoChannel
 {
@@ -55,6 +57,14 @@ class ExpoChannel
                 $notification->toExpoPush($notifiable)->toArray(),
                 config('exponent-push-notifications.debug')
             );
+        } catch (TooManyExperienceIds $exception) {
+            foreach ($exception->getDetails() as $experienceId => $tokens) {
+                Interest::where('key', $interest)
+                    ->whereIn('value', $tokens)
+                    ->update(['experience_id' => $experienceId]);
+            }
+
+            return $this->send($notifiable, $notification);
         } catch (ExpoException $e) {
             $this->events->dispatch(
                 new NotificationFailed($notifiable, $notification, 'expo-push-notifications', $e->getMessage())
@@ -72,6 +82,6 @@ class ExpoChannel
     {
         $class = str_replace('\\', '.', get_class($notifiable));
 
-        return $class.'.'.$notifiable->getKey();
+        return $class . '.' . $notifiable->getKey();
     }
 }

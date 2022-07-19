@@ -35,7 +35,8 @@ class ExpoController extends Controller
     public function subscribe(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'expo_token'    =>  'required|string',
+            'expo_token' => 'required|string',
+            'experience_id' => 'required|string',
         ]);
 
         if ($validator->fails()) {
@@ -48,22 +49,24 @@ class ExpoController extends Controller
         }
 
         $token = $request->get('expo_token');
+        $experienceId = $request->get('experience_id');
 
         $interest = $this->expoChannel->interestName(Auth::user());
 
         try {
-            $this->expoChannel->expo->subscribe($interest, $token);
+            $this->expoChannel->expo
+                ->subscribe($interest, $token, $experienceId);
         } catch (\Exception $e) {
             return new JsonResponse([
-                'status'    => 'failed',
-                'error'     =>  [
+                'status' => 'failed',
+                'error' => [
                     'message' => $e->getMessage(),
                 ],
             ], 500);
         }
 
         return new JsonResponse([
-            'status'    =>  'succeeded',
+            'status' => 'succeeded',
             'expo_token' => $token,
         ], 200);
     }

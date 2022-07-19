@@ -2,6 +2,7 @@
 
 namespace NotificationChannels\ExpoPushNotifications\Repositories;
 
+use ExponentPhpSDK\Dto\Token;
 use ExponentPhpSDK\ExpoRepository;
 use NotificationChannels\ExpoPushNotifications\Models\Interest;
 
@@ -9,14 +10,14 @@ class ExpoDatabaseDriver implements ExpoRepository
 {
     /**
      * Stores an Expo token with a given identifier.
-     *
-     * @param $key
-     * @param $value
-     * @return bool
      */
-    public function store($key, $value): bool
-    {
+    public function store(
+        string $key,
+        string $value,
+        ?string $experienceId = null,
+    ): bool {
         $interest = Interest::firstOrCreate([
+            'experience_id' => $experienceId,
             'key' => $key,
             'value' => $value,
         ]);
@@ -27,22 +28,23 @@ class ExpoDatabaseDriver implements ExpoRepository
     /**
      * Retrieves an Expo token with a given identifier.
      *
-     * @param  string  $key
-     * @return array
+     * @return array<Token>
      */
-    public function retrieve(string $key)
+    public function retrieve(string $key): array
     {
-        return Interest::where('key', $key)->pluck('value')->toArray();
+        return Interest::where('key', $key)
+            ->get()
+            ->map(fn (Interest $interest) => new Token(
+                $interest->value,
+                $interest->experience_id
+            ))
+            ->toArray();
     }
 
     /**
      * Removes an Expo token with a given identifier.
-     *
-     * @param  string  $key
-     * @param  string  $value
-     * @return bool
      */
-    public function forget(string $key, string $value = null): bool
+    public function forget(string $key, ?string $value = null): bool
     {
         $query = Interest::where('key', $key);
 

@@ -4,6 +4,11 @@ namespace NotificationChannels\ExpoPushNotifications\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
+/**
+ * @property string|null $experienceId
+ * @property string $key
+ * @property string $value
+ */
 class Interest extends Model
 {
     /**
@@ -26,6 +31,7 @@ class Interest extends Model
      * @var array
      */
     protected $fillable = [
+        'experience_id',
         'key',
         'value',
     ];
